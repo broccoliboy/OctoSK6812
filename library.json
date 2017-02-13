@@ -1,9 +1,9 @@
 {
-  "name": "OctoWS2811",
+  "name": "OctoSK6812",
   "frameworks": "Arduino",
   "platforms": "Teensy",
   "keywords": "serial",
-  "description": "Control thousands of WS2811/2812 LEDs at video refresh speeds",
+  "description": "Control thousands of SK6812 LEDs at video refresh speeds",
   "url": "http://www.pjrc.com/teensy/td_libs_OctoWS2811.html",
   "authors":
   {
