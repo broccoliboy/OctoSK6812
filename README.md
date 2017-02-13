@@ -1,6 +1,9 @@
 OctoSK6812
 ==========
 
+WARNING: this code has not been tested very thoroughly. Examples may not work, and may reference the old library. File an issue, with proposed fixed and I can make changes.
+
+
 This is a port of Paul Stoffregen's OctoWS2811 Library to use SK6812 24 bit RGB and 32 bit RGBW LEDs.
 
 This uses changes made by Mackenzie Hauck nocduro.ca that can be seen on hackaday:
