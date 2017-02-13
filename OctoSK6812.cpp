@@ -1,8 +1,10 @@
-/*  OctoSK6812 - High Performance WS2811 LED Display Library
-    http://www.pjrc.com/teensy/td_libs_OctoSK6812.html
+/*
+		OctoSK6812 is an update to allow for usage with SK6812 LEDs by Tenkai Kariya 2/12/17
+    Original modificaitons by made by Mackenzie Hauck nocduro.ca
+    https://hackaday.io/project/11850-led-light-rod/log/39905-modifying-octows2811-to-work-with-rgbw-led-strips
+    OctoWS2811 - High Performance WS2811 LED Display Library
+    http://www.pjrc.com/teensy/td_libs_OctoWS2811.html
     Copyright (c) 2013 Paul Stoffregen, PJRC.COM, LLC
-    Some Teensy-LC support contributed by Mark Baysinger.
-    https://forum.pjrc.com/threads/40863-Teensy-LC-port-of-OctoSK6812
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
