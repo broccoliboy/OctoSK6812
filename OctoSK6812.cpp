@@ -1,8 +1,8 @@
-/*  OctoWS2811 - High Performance WS2811 LED Display Library
-    http://www.pjrc.com/teensy/td_libs_OctoWS2811.html
+/*  OctoSK6812 - High Performance WS2811 LED Display Library
+    http://www.pjrc.com/teensy/td_libs_OctoSK6812.html
     Copyright (c) 2013 Paul Stoffregen, PJRC.COM, LLC
     Some Teensy-LC support contributed by Mark Baysinger.
-    https://forum.pjrc.com/threads/40863-Teensy-LC-port-of-OctoWS2811
+    https://forum.pjrc.com/threads/40863-Teensy-LC-port-of-OctoSK6812
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -24,27 +24,34 @@
 */
 
 #include <string.h>
-#include "OctoWS2811.h"
+#include "OctoSK6812.h"
 
 
-uint16_t OctoWS2811::stripLen;
-void * OctoWS2811::frameBuffer;
-void * OctoWS2811::drawBuffer;
-uint8_t OctoWS2811::params;
-DMAChannel OctoWS2811::dma1;
-DMAChannel OctoWS2811::dma2;
-DMAChannel OctoWS2811::dma3;
+uint16_t OctoSK6812::stripLen;
+void * OctoSK6812::frameBuffer;
+void * OctoSK6812::drawBuffer;
+uint8_t OctoSK6812::params;
+DMAChannel OctoSK6812::dma1;
+DMAChannel OctoSK6812::dma2;
+DMAChannel OctoSK6812::dma3;
 
 static uint8_t ones = 0xFF;
 static volatile uint8_t update_in_progress = 0;
 static uint32_t update_completed_at = 0;
 
-OctoWS2811::OctoWS2811(uint32_t numPerStrip, void *frameBuf, void *drawBuf, uint8_t config)
+OctoSK6812::OctoSK6812(uint32_t numPerStrip, void *frameBuf, void *drawBuf, uint8_t config)
 {
 	stripLen = numPerStrip;
 	frameBuffer = frameBuf;
 	drawBuffer = drawBuf;
 	params = config;
+	if (params > 3) {
+		// if RGBW strips we need 32 bits per led
+		pixelBits = 32;
+	} else {
+		pixelBits = 24;
+	}
+
 }
 
 // Waveform timing: these set the high time for a 0 and 1 bit, as a fraction of
@@ -62,16 +69,16 @@ OctoWS2811::OctoWS2811(uint32_t numPerStrip, void *frameBuf, void *drawBuf, uint
 // have an insight about tuning these parameters AND you have actually tested on
 // real LED strips, please contact paul@pjrc.com.  Please do not email based only
 // on reading the datasheets and purely theoretical analysis.
-#define WS2811_TIMING_T0H  60
-#define WS2811_TIMING_T1H  176
+#define SK6812_TIMING_T0H  60
+#define SK6812_TIMING_T1H  176
 
 // Discussion about timing and flicker & color shift issues:
 // http://forum.pjrc.com/threads/23877-WS2812B-compatible-with-OctoWS2811-library?p=38190&viewfull=1#post38190
 
-void OctoWS2811::begin(void)
+void OctoSK6812::begin(void)
 {
 	uint32_t bufsize, frequency;
-	bufsize = stripLen*24;
+	bufsize = stripLen * pixelBits;
 
 	// set up the buffers
 	memset(frameBuffer, 0, bufsize);
@@ -120,8 +127,8 @@ void OctoWS2811::begin(void)
 	FTM1_SC = FTM_SC_CLKS(1) | FTM_SC_PS(0);
 	FTM1_C0SC = 0x69;
 	FTM1_C1SC = 0x69;
-	FTM1_C0V = (mod * WS2811_TIMING_T0H) >> 8;
-	FTM1_C1V = (mod * WS2811_TIMING_T1H) >> 8;
+	FTM1_C0V = (mod * SK6812_TIMING_T0H) >> 8;
+	FTM1_C1V = (mod * SK6812_TIMING_T1H) >> 8;
 	// pin 16 triggers DMA(port B) on rising edge
 	CORE_PIN16_CONFIG = PORT_PCR_IRQC(1)|PORT_PCR_MUX(3);
 	//CORE_PIN4_CONFIG = PORT_PCR_MUX(3); // testing only
@@ -134,8 +141,8 @@ void OctoWS2811::begin(void)
 	FTM2_SC = FTM_SC_CLKS(1) | FTM_SC_PS(0);
 	FTM2_C0SC = 0x69;
 	FTM2_C1SC = 0x69;
-	FTM2_C0V = (mod * WS2811_TIMING_T0H) >> 8;
-	FTM2_C1V = (mod * WS2811_TIMING_T1H) >> 8;
+	FTM2_C0V = (mod * SK6812_TIMING_T0H) >> 8;
+	FTM2_C1V = (mod * SK6812_TIMING_T1H) >> 8;
 	// pin 32 is FTM2_CH0, PTB18, triggers DMA(port B) on rising edge
 	// pin 25 is FTM2_CH1, PTB19
 	CORE_PIN32_CONFIG = PORT_PCR_IRQC(1)|PORT_PCR_MUX(3);
@@ -149,8 +156,8 @@ void OctoWS2811::begin(void)
 	FTM2_SC = FTM_SC_CLKS(1) | FTM_SC_PS(0);
 	FTM2_C0SC = 0x69;
 	FTM2_C1SC = 0x69;
-	FTM2_C0V = (mod * WS2811_TIMING_T0H) >> 8;
-	FTM2_C1V = (mod * WS2811_TIMING_T1H) >> 8;
+	FTM2_C0V = (mod * SK6812_TIMING_T0H) >> 8;
+	FTM2_C1V = (mod * SK6812_TIMING_T1H) >> 8;
 	// FTM2_CH0, PTA10 (not connected), triggers DMA(port A) on rising edge
 	PORTA_PCR10 = PORT_PCR_IRQC(1)|PORT_PCR_MUX(3);
 
@@ -162,8 +169,8 @@ void OctoWS2811::begin(void)
 	FTM2_SC = FTM_SC_CLKS(1) | FTM_SC_PS(0);
 	FTM2_C0SC = FTM_CSC_CHF | FTM_CSC_MSB | FTM_CSC_ELSB;
 	FTM2_C1SC = FTM_CSC_CHF | FTM_CSC_MSB | FTM_CSC_ELSB;
-	TPM2_C0V = mod - ((mod * WS2811_TIMING_T1H) >> 8);
-	TPM2_C1V = mod - ((mod * WS2811_TIMING_T1H) >> 8) + ((mod * WS2811_TIMING_T0H) >> 8);
+	TPM2_C0V = mod - ((mod * SK6812_TIMING_T1H) >> 8);
+	TPM2_C1V = mod - ((mod * SK6812_TIMING_T1H) >> 8) + ((mod * SK6812_TIMING_T0H) >> 8);
 
 #endif
 
@@ -219,7 +226,7 @@ void OctoWS2811::begin(void)
 	//pinMode(9, OUTPUT); // testing: oscilloscope trigger
 }
 
-void OctoWS2811::isr(void)
+void OctoSK6812::isr(void)
 {
 	//digitalWriteFast(9, HIGH);
 	//Serial1.print(".");
@@ -235,7 +242,7 @@ void OctoWS2811::isr(void)
 	//digitalWriteFast(9, LOW);
 }
 
-int OctoWS2811::busy(void)
+int OctoSK6812::busy(void)
 {
 	if (update_in_progress) return 1;
 	// busy for 50 (or 300 for ws2813) us after the done interrupt, for WS2811 reset
@@ -243,7 +250,7 @@ int OctoWS2811::busy(void)
 	return 0;
 }
 
-void OctoWS2811::show(void)
+void OctoSK6812::show(void)
 {
 	// wait for any prior DMA operation
 	//Serial1.print("1");
@@ -254,7 +261,7 @@ void OctoWS2811::show(void)
 	if (drawBuffer != frameBuffer) {
 		// TODO: this could be faster with DMA, especially if the
 		// buffers are 32 bit aligned... but does it matter?
-		memcpy(frameBuffer, drawBuffer, stripLen * 24);
+		memcpy(frameBuffer, drawBuffer, stripLen * pixelBits);
 	}
 	// wait for WS2811 reset
 	while (micros() - update_completed_at < frameSetDelay) ;
@@ -374,28 +381,32 @@ void OctoWS2811::show(void)
 	//Serial1.print("4");
 }
 
-void OctoWS2811::setPixel(uint32_t num, int color)
+void OctoSK6812::setPixel(uint32_t num, int color)
 {
 	uint32_t strip, offset, mask;
 	uint8_t bit, *p;
 
 	switch (params & 7) {
-	  case WS2811_RBG:
+		case SK6812_RBG:
 		color = (color&0xFF0000) | ((color<<8)&0x00FF00) | ((color>>8)&0x0000FF);
 		break;
-	  case WS2811_GRB:
+		case SK6812_GRB:
 		color = ((color<<8)&0xFF0000) | ((color>>8)&0x00FF00) | (color&0x0000FF);
 		break;
-	  case WS2811_GBR:
+		case SK6812_GBR:
 		color = ((color<<8)&0xFFFF00) | ((color>>16)&0x0000FF);
 		break;
+		case SK6812_GRBW:
+		color = ((color<<8)&0xFF000000) | ((color>>8)&0x00FF0000) | (color&0x0000FFFF);
+		break;
+
 	  default:
 		break;
 	}
 	strip = num / stripLen;  // Cortex-M4 has 2 cycle unsigned divide :-)
 	offset = num % stripLen;
 	bit = (1<<strip);
-	p = ((uint8_t *)drawBuffer) + offset * 24;
+	p = ((uint8_t *)drawBuffer) + offset * pixelBits;
 	for (mask = (1<<23) ; mask ; mask >>= 1) {
 		if (color & mask) {
 			*p++ |= bit;
@@ -405,7 +416,7 @@ void OctoWS2811::setPixel(uint32_t num, int color)
 	}
 }
 
-int OctoWS2811::getPixel(uint32_t num)
+int OctoSK6812::getPixel(uint32_t num)
 {
 	uint32_t strip, offset, mask;
 	uint8_t bit, *p;
@@ -414,26 +425,24 @@ int OctoWS2811::getPixel(uint32_t num)
 	strip = num / stripLen;
 	offset = num % stripLen;
 	bit = (1<<strip);
-	p = ((uint8_t *)drawBuffer) + offset * 24;
-	for (mask = (1<<23) ; mask ; mask >>= 1) {
+	p = ((uint8_t *)drawBuffer) + offset * pixelBits;
+	for (mask = (1<<(pixelBits-1)) ; mask ; mask >>= 1) {
 		if (*p++ & bit) color |= mask;
 	}
 	switch (params & 7) {
-	  case WS2811_RBG:
+		case SK6812_RBG:
 		color = (color&0xFF0000) | ((color<<8)&0x00FF00) | ((color>>8)&0x0000FF);
 		break;
-	  case WS2811_GRB:
+		case SK6812_GRB:
 		color = ((color<<8)&0xFF0000) | ((color>>8)&0x00FF00) | (color&0x0000FF);
 		break;
-	  case WS2811_GBR:
+		case SK6812_GBR:
 		color = ((color<<8)&0xFFFF00) | ((color>>16)&0x0000FF);
 		break;
-	  case WS2811_BRG:
-		color = ((color<<16)&0xFF0000) | ((color>>8)&0x00FFFF);
+		case SK6812_GRBW:
+		color = ((color<<8)&0xFF000000) | ((color>>8)&0x00FF0000) | (color&0x0000FFFF);
 		break;
-	  case WS2811_BGR:
-		color = ((color<<16)&0xFF0000) | (color&0x00FF00) | ((color>>16)&0x0000FF);
-		break;
+
 	  default:
 		break;
 	}

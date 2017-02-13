@@ -1,4 +1,7 @@
-/*  OctoWS2811 - High Performance WS2811 LED Display Library
+/*
+		OctoSK6812 is based upon the OctoWS2811 library from PJRC.
+
+		OctoWS2811 - High Performance WS2811 LED Display Library
     http://www.pjrc.com/teensy/td_libs_OctoWS2811.html
     Copyright (c) 2013 Paul Stoffregen, PJRC.COM, LLC
 
@@ -21,8 +24,8 @@
     THE SOFTWARE.
 */
 
-#ifndef OctoWS2811_h
-#define OctoWS2811_h
+#ifndef OctoSK6812_h
+#define OctoSK6812_h
 
 #include <Arduino.h>
 #include "DMAChannel.h"
@@ -31,30 +34,36 @@
 #error "Teensyduino version 1.21 or later is required to compile this library."
 #endif
 #ifdef __AVR__
-#error "OctoWS2811 does not work with Teensy 2.0 or Teensy++ 2.0."
+#error "OctoSK6812_h does not work with Teensy 2.0 or Teensy++ 2.0."
 #endif
 
-#define WS2811_RGB	0	// The WS2811 datasheet documents this way
-#define WS2811_RBG	1
-#define WS2811_GRB	2	// Most LED strips are wired this way
-#define WS2811_GBR	3
-#define WS2811_BRG	4
-#define WS2811_BGR	5
+#define SK6812_RGB  0  // The WS2811 datasheet documents this way
+#define SK6812_RBG  1
+#define SK6812_GRB  2  // Most LED strips are wired this way
+#define SK6812_GBR  3
+
+#define SK6812_RGBW 4
+#define SK6812_GRBW 5
 
 #define WS2811_800kHz 0x00	// Nearly all WS2811 are 800 kHz
 #define WS2811_400kHz 0x10	// Adafruit's Flora Pixels
 #define WS2813_800kHz 0x20	// WS2813 are close to 800 kHz but has 300 us frame set delay
 
 
-class OctoWS2811 {
+class OctoSK6812 {
 public:
-	OctoWS2811(uint32_t numPerStrip, void *frameBuf, void *drawBuf, uint8_t config = WS2811_GRB);
+	OctoSK6812(uint32_t numPerStrip, void *frameBuf, void *drawBuf, uint8_t config = SK6812_RGBW);
 	void begin(void);
 
 	void setPixel(uint32_t num, int color);
 	void setPixel(uint32_t num, uint8_t red, uint8_t green, uint8_t blue) {
 		setPixel(num, color(red, green, blue));
 	}
+
+	void setPixel(uint32_t num, uint8_t red, uint8_t green, uint8_t blue, uint8_t white) {
+		setPixel(num, color(red, green, blue, white));
+	}
+
 	int getPixel(uint32_t num);
 
 	void show(void);
@@ -66,10 +75,14 @@ public:
 	int color(uint8_t red, uint8_t green, uint8_t blue) {
 		return (red << 16) | (green << 8) | blue;
 	}
+	int color(uint8_t red, uint8_t green, uint8_t blue, uint8_t white) {
+    return (red << 24) | (green << 16) | (blue << 8) | white;
+  }
 
 
 private:
 	static uint16_t stripLen;
+	static uint8_t pixelBits;
 	static void *frameBuffer;
 	static void *drawBuffer;
 	static uint8_t params;
