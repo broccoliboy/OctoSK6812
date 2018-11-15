@@ -30,6 +30,7 @@
 
 
 uint16_t OctoSK6812::stripLen;
+uint8_t OctoSK6812::pixelBits;
 void * OctoSK6812::frameBuffer;
 void * OctoSK6812::drawBuffer;
 uint8_t OctoSK6812::params;
@@ -390,26 +391,25 @@ void OctoSK6812::setPixel(uint32_t num, int color)
 
 	switch (params & 7) {
 		case SK6812_RBG:
-		color = (color&0xFF0000) | ((color<<8)&0x00FF00) | ((color>>8)&0x0000FF);
-		break;
+			color = (color&0xFF0000) | ((color<<8)&0x00FF00) | ((color>>8)&0x0000FF);
+			break;
 		case SK6812_GRB:
-		color = ((color<<8)&0xFF0000) | ((color>>8)&0x00FF00) | (color&0x0000FF);
-		break;
+			color = ((color<<8)&0xFF0000) | ((color>>8)&0x00FF00) | (color&0x0000FF);
+			break;
 		case SK6812_GBR:
-		color = ((color<<8)&0xFFFF00) | ((color>>16)&0x0000FF);
-		break;
+			color = ((color<<8)&0xFFFF00) | ((color>>16)&0x0000FF);
+			break;
 		case SK6812_GRBW:
-		color = ((color<<8)&0xFF000000) | ((color>>8)&0x00FF0000) | (color&0x0000FFFF);
-		break;
-
-	  default:
-		break;
+			color = ((color<<8)&0xFF000000) | ((color>>8)&0x00FF0000) | (color&0x0000FFFF);
+			break;
+	  	default:
+			break;
 	}
 	strip = num / stripLen;  // Cortex-M4 has 2 cycle unsigned divide :-)
 	offset = num % stripLen;
 	bit = (1<<strip);
 	p = ((uint8_t *)drawBuffer) + offset * pixelBits;
-	for (mask = (1<<23) ; mask ; mask >>= 1) {
+	for (mask = (1<<(pixelBits-1)) ; mask ; mask >>= 1) {
 		if (color & mask) {
 			*p++ |= bit;
 		} else {

@@ -73,11 +73,11 @@ public:
 		return stripLen * 8;
 	}
 	int color(uint8_t red, uint8_t green, uint8_t blue) {
-		return (red << 16) | (green << 8) | blue;
+		return (red << (pixelBits-8)) | (green << (pixelBits-16)) | (blue << (pixelBits-24));
 	}
 	int color(uint8_t red, uint8_t green, uint8_t blue, uint8_t white) {
-    return (red << 24) | (green << 16) | (blue << 8) | white;
-  }
+    	return (red << (pixelBits-8)) | (green << (pixelBits-16)) | (blue << (pixelBits-24)) | white;
+  	}
 
 
 private:
@@ -86,9 +86,10 @@ private:
 	static void *frameBuffer;
 	static void *drawBuffer;
 	static uint8_t params;
-  uint16_t frameSetDelay;
+  	uint16_t frameSetDelay;
 	static DMAChannel dma1, dma2, dma3;
 	static void isr(void);
+	
 };
 
 #endif
